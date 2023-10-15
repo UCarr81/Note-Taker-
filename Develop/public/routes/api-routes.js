@@ -1,51 +1,44 @@
-const db = require("/Develop/db/db.json");
 const fs = require("fs");
-const uuid = require("uuid");
+const path = require("path");
 
-module.exports = function(app) {
-  app.get("/api/notes", function(req, res) {
-    res.send(db);
+const notesData = require('../db.json');
+
+module.exports = function (app) {
+  app.get('/api/notes', (req, res) => {
+    res.json(notesData);
   });
 
-  app.post("/api/notes", function(req, res) {
+  app.post('/api/notes', (req, res) => {
+    const newNote = req.body;
+    newNote.id = Date.now().toString();
+    notesData.push(newNote);
 
-    let noteId = uuid();
-    let newNote = {
-      id: noteId,
-      title: req.body.title,
-      text: req.body.text
-    };
-
-    fs.readFile("/Develop/db/db.json", "utf8", (err, data) => {
-      if (err) throw err;
-
-      const allNotes = JSON.parse(data);
-
-      allNotes.push(newNote);
-
-      fs.writeFile("/Develop/db/db.json", JSON.stringify(allNotes, null, 2), err => {
+    fs.writeFile(
+      path.join(__dirname, '../db.json'),
+      JSON.stringify(notesData, null, 2),
+      (err) => {
         if (err) throw err;
-        res.send(db);
-        console.log("Note created!")
-      });
-    });
+        res.json(newNote);
+      }
+    );
   });
 
-  app.delete("/api/notes/:id", (req, res) => {
+  app.delete('/api/notes/:id', (req, res) => {
+    const noteId = req.params.id;
+    const noteIndex = notesData.findIndex((note) => note.id === noteId);
 
-    let noteId = req.params.id;
-
-    fs.readFile("/Develop/db/db.json", "utf8", (err, data) => {
-      if (err) throw err;
-
-      const allNotes = JSON.parse(data);
-      const newAllNotes = allNotes.filter(note => note.id != noteId);
-
-      fs.writeFile("/Develop/db/db.json", JSON.stringify(newAllNotes, null, 2), err => {
-        if (err) throw err;
-        res.send(db);
-        console.log("Deleted Note!")
-      });
-    });
+    if (noteIndex !== -1) {
+      notesData.splice(noteIndex, 1);
+      fs.writeFile(
+        path.join(__dirname, '../db.json'),
+        JSON.stringify(notesData, null, 2),
+        (err) => {
+          if (err) throw err;
+          res.json({ success: true });
+        }
+      );
+    } else {
+      res.status(404).json({ error: 'Note not found' });
+    }
   });
 };
