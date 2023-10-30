@@ -1,44 +1,32 @@
-const fs = require("fs");
-const path = require("path");
+const router = require('express').Router();
+const { v4: uuidv4 } = require('uuid');
+const fs = require ("fs");
 
-const notesData = require('../db.json');
+router.get('/api/notes', async (req, res) => {
+  const jasonfy = await JSON.parse(fs.readFileSync("db/db.json","utf8"));
+  res.json(jasonfy);
+});
 
-module.exports = function (app) {
-  app.get('/api/notes', (req, res) => {
-    res.json(notesData);
+router.post('/api/notes', (req, res) => {
+  const jsonfy = JSON.parse(fs.readFileSync("db/db.json","utf8"));
+  const newFeedback = {
+    title: req.body.title,
+    text: req.body.text,
+    id: uuidv4(),
+  };
+  dbJson.push(newFeedback);
+  fs.writeFileSync("db/db.json",JSON.stringify(jasonfy));
+  res.json(jsonfy);
+});
+
+router.delete('/api/notes/:id', (req, res) => {
+  let data = fs.readFileSync("db/db.json", "utf8");
+  const dataJSON =  JSON.parse(data);
+  const newNotes = dataJSON.filter((note) => { 
+    return note.id !== req.params.id;
   });
+  fs.writeFileSync("db/db.json",JSON.stringify(newNotes));
+  res.json("That note gone.");
+});
 
-  app.post('/api/notes', (req, res) => {
-    const newNote = req.body;
-    newNote.id = Date.now().toString();
-    notesData.push(newNote);
-
-    fs.writeFile(
-      path.join(__dirname, '../db.json'),
-      JSON.stringify(notesData, null, 2),
-      (err) => {
-        if (err) throw err;
-        res.json(newNote);
-      }
-    );
-  });
-
-  app.delete('/api/notes/:id', (req, res) => {
-    const noteId = req.params.id;
-    const noteIndex = notesData.findIndex((note) => note.id === noteId);
-
-    if (noteIndex !== -1) {
-      notesData.splice(noteIndex, 1);
-      fs.writeFile(
-        path.join(__dirname, '../db.json'),
-        JSON.stringify(notesData, null, 2),
-        (err) => {
-          if (err) throw err;
-          res.json({ success: true });
-        }
-      );
-    } else {
-      res.status(404).json({ error: 'Note not found' });
-    }
-  });
-};
+module.exports = router; 
