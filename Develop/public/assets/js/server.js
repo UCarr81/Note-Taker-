@@ -1,21 +1,16 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const html_routes = require('/Develop/public/routes/html-routes');
+const api_routes = require('/Develop/public/routes/api-routes');
+const PORT = process.env.PORT || 3001;
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-const apiRoutes = require('/Develop/public/routes/api-routes');
-console.log('is it working?')
-const htmlRoutes = require('./Develop/public/routes/html-routes');
-
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: false}));
+app.use (express.json());
 app.use(express.static('public'));
+app.use(html_routes);
+app.use(api_routes);
 
-app.use('/api', apiRoutes);
-app.use('/', htmlRoutes);
-
-app.listen(PORT, function () {
-  console.log('App listening on PORT:' + PORT);
+app.listen(PORT, () => {
+  console.log(`Sserver listening on http://localhost:${PORT}`)
 });
